@@ -1,25 +1,37 @@
-import logo from './logo.svg';
 import './App.css';
+import {DndContext} from '@dnd-kit/core';
+
+import {Droppable} from './Droppable';
+import {Draggable} from './Draggable';
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+  const containers = ['A', 'B', 'C'];
+  const [parent, setParent] = useState(null);
+  const draggableMarkup = (
+    <Draggable id="draggable">Drag me</Draggable>
   );
-}
+
+  return (
+    <DndContext onDragEnd={handleDragEnd}>
+      {parent === null ? draggableMarkup : null}
+
+      {containers.map((id) => (
+        // We updated the Droppable component so it would accept an `id`
+        // prop and pass it to `useDroppable`
+        <Droppable key={id} id={id}>
+          {parent === id ? draggableMarkup : 'Drop here'}
+        </Droppable>
+      ))}
+    </DndContext>
+  );
+
+  function handleDragEnd(event) {
+    const {over} = event;
+
+    // If the item is dropped over a container, set it as the parent
+    // otherwise reset the parent to `null`
+    setParent(over ? over.id : null);
+  }
+};
 
 export default App;
