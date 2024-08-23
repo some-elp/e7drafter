@@ -1,37 +1,80 @@
-import './App.css';
-import {DndContext} from '@dnd-kit/core';
+import { useState } from 'react';
+import { DndContext, useDraggable, useDroppable } from '@dnd-kit/core';
 
-import {Droppable} from './Droppable';
-import {Draggable} from './Draggable';
+function Droppable({ id, children }) {
+  const { setNodeRef } = useDroppable({
+    id,
+  });
+
+  return (
+    <div ref={setNodeRef} style={{ border: '1px solid black', minHeight: '150px', padding: '10px', margin: '10px' }}>
+      {children}
+    </div>
+  );
+};
+
+function Draggable({ id, src }) {
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    id,
+  });
+
+  const style = {
+    transform: `translate3d(${transform ? `${transform.x}px, ${transform.y}px, 0` : '0, 0, 0'})`,
+    width: '100px',
+    margin: '10px',
+  };
+
+  return (
+    <img
+      ref={setNodeRef}
+      style={style}
+      src={src}
+      alt=""
+      {...listeners}
+      {...attributes}
+    />
+  );
+};
 
 function App() {
-  const containers = ['A', 'B', 'C'];
-  const [parent, setParent] = useState(null);
-  const draggableMarkup = (
-    <Draggable id="draggable">Drag me</Draggable>
-  );
+  const [leftBoxImages, setLeftBoxImages] = useState([]);
+  const [rightBoxImages, setRightBoxImages] = useState([]);
+  const [middleImages] = useState(['/e7drafter/images/logo192.png', '/e7drafter/images/logo512.png']);
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const newId = `${active.id}-${Date.now()}`;
+      if (over.id === 'left-box') {
+        setLeftBoxImages((prev) => [...prev, { id: newId, src: active.id }]);
+      } else if (over.id === 'right-box') {
+        setRightBoxImages((prev) => [...prev, { id: newId, src: active.id }]);
+      }
+    }
+  };
 
   return (
     <DndContext onDragEnd={handleDragEnd}>
-      {parent === null ? draggableMarkup : null}
-
-      {containers.map((id) => (
-        // We updated the Droppable component so it would accept an `id`
-        // prop and pass it to `useDroppable`
-        <Droppable key={id} id={id}>
-          {parent === id ? draggableMarkup : 'Drop here'}
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <Droppable id="left-box">
+          {leftBoxImages.map((image, index) => (
+            <Draggable key={index} id={image.id} src={image.src} />
+          ))}
         </Droppable>
-      ))}
+        <div style={{ border: '1px solid black', padding: '10px', margin: '10px', display: 'flex', flexWrap: 'wrap' }}>
+          {middleImages.map((src, index) => (
+            <Draggable key={index} id={src} src={src} />
+          ))}
+        </div>
+        <Droppable id="right-box">
+          {rightBoxImages.map((image, index) => (
+            <Draggable key={index} id={image.id} src={image.src} />
+          ))}
+        </Droppable>
+      </div>
     </DndContext>
   );
-
-  function handleDragEnd(event) {
-    const {over} = event;
-
-    // If the item is dropped over a container, set it as the parent
-    // otherwise reset the parent to `null`
-    setParent(over ? over.id : null);
-  }
 };
 
 export default App;
